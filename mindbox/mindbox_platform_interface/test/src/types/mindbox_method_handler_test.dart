@@ -1,0 +1,411 @@
+import 'dart:async';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mindbox_platform_interface/mindbox_platform_interface.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late MindboxMethodHandler handler;
+
+  setUp(() {
+    handler = MindboxMethodHandler();
+    channel.setMockMethodCallHandler(mindboxMockMethodCallHandler);
+  });
+
+  tearDown(
+    () {
+      channel.setMockMethodCallHandler(null);
+    },
+  );
+
+  test(
+    'getPlatformVersion',
+    () async {
+      expect(await handler.nativeSdkVersion, 'dummy-sdk-version');
+    },
+  );
+
+  test(
+    'init()',
+    () async {
+      final completer = Completer<String>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler
+          .init(configuration: validConfig)
+          .then((value) => completer.complete('initialized'));
+
+      expect(completer.isCompleted, isTrue);
+    },
+  );
+
+  test(
+    'When config is invalid, init() calling should throws MindboxException',
+    () async {
+      final invalidConfig = Configuration(
+        domain: '',
+        endpointIos: '',
+        endpointAndroid: '',
+        subscribeCustomerIfCreated: true,
+      );
+
+      expect(() async => handler.init(configuration: invalidConfig),
+          throwsA(isA<MindboxInitializeError>()));
+    },
+  );
+
+  test(
+    'When SDK was initialized, getDeviceUUID() should return device uuid',
+    () async {
+      final completer = Completer<String>();
+
+      handler.getDeviceUUID(callback: (uuid) => completer.complete(uuid));
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      expect(await completer.future, equals('dummy-device-uuid'));
+    },
+  );
+
+  test(
+    'When SDK was not initialized, getDeviceUUID() should not return '
+    'device uuid',
+    () async {
+      final completer = Completer<String>();
+
+      handler.getDeviceUUID(callback: (uuid) => completer.complete(uuid));
+
+      expect(completer.isCompleted, isFalse);
+    },
+  );
+
+  test(
+    'When SDK was initialized, getToken() should return token',
+    () async {
+      final completer = Completer<String>();
+
+      handler.getToken(
+          callback: (deviceToken) => completer.complete(deviceToken));
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      expect(await completer.future, equals('dummy-token'));
+    },
+  );
+
+  test(
+    'When SDK was not initialized, getToken() should not return token',
+    () async {
+      final completer = Completer<String>();
+
+      handler.getToken(
+          callback: (deviceToken) => completer.complete(deviceToken));
+
+      expect(completer.isCompleted, isFalse);
+    },
+  );
+
+  test(
+    'onPushClickReceived()',
+    () async {
+      final StubMindboxMethodHandler handler = StubMindboxMethodHandler();
+      final completer = Completer<String>();
+
+      handler.handlePushClick(callback: (url) => completer.complete(url));
+
+      expect(await completer.future, equals('dummy-url'));
+    },
+  );
+
+  test(
+    'When SDK was initialized, executeAsyncOperation() should be invoked',
+    () async {
+      final completer = Completer<String>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      handler.executeAsyncOperation(
+        operationSystemName: 'dummy-name',
+        operationBody: {'dummy-key': 'dummy-value'},
+      ).whenComplete(() => completer.complete('invoked'));
+
+      await handler.init(configuration: validConfig);
+
+      expect(completer.isCompleted, isTrue);
+    },
+  );
+
+  test(
+    'When SDK not initialized, executeAsyncOperation() should not be invoked',
+    () async {
+      final completer = Completer<String>();
+
+      handler.executeAsyncOperation(
+        operationSystemName: 'dummy-name',
+        operationBody: {'dummy-key': 'dummy-value'},
+      ).whenComplete(() => completer.complete('invoked'));
+
+      expect(completer.isCompleted, isFalse);
+    },
+  );
+
+  test(
+    'When SDK was initialized, executeSyncOperation() should be invoked',
+    () async {
+      final completer = Completer<String>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      handler
+          .executeSyncOperation(
+            operationSystemName: 'dummy-name',
+            operationBody: {'dummy-key': 'dummy-value'},
+            onSuccess: (success) {},
+            onError: (error) {},
+          )
+          .whenComplete(() => completer.complete('invoked'));
+
+      await handler.init(configuration: validConfig);
+
+      expect(completer.isCompleted, isTrue);
+    },
+  );
+
+  test(
+    'When SDK not initialized, executeSyncOperation() should not be invoked',
+    () async {
+      final completer = Completer<String>();
+
+      handler
+          .executeSyncOperation(
+            operationSystemName: 'dummy-name',
+            operationBody: {'dummy-key': 'dummy-value'},
+            onSuccess: (success) {},
+            onError: (error) {},
+          )
+          .whenComplete(() => completer.complete('invoked'));
+
+      expect(completer.isCompleted, isFalse);
+    },
+  );
+
+  test(
+    'When no errors occur during execution, executeSyncOperation() should '
+    'return success response',
+    () async {
+      final completer = Completer<String>();
+
+      handler.executeSyncOperation(
+        operationSystemName: 'dummy-valid-name',
+        operationBody: {'dummy-key': 'dummy-value'},
+        onSuccess: (response) => completer.complete(response),
+        onError: (error) => completer.complete(error.toString()),
+      );
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      expect(await completer.future, equals('dummy-response'));
+    },
+  );
+
+  test(
+    'When validation data is incorrect, executeSyncOperation() should throw'
+    'MindboxValidationError to onError callback',
+    () async {
+      final completer = Completer<Exception>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      handler.executeSyncOperation(
+        operationSystemName: 'dummy-validation-error',
+        operationBody: {'dummy-key': 'dummy-value'},
+        onSuccess: (success) {},
+        onError: (error) => completer.completeError(error),
+      );
+
+      expect(() => completer.future, throwsA(isA<MindboxValidationError>()));
+    },
+  );
+
+  test(
+    'When operation data is incorrect, executeSyncOperation() should throw'
+    'MindboxProtocolError to onError callback',
+    () async {
+      final completer = Completer<Exception>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      handler.executeSyncOperation(
+        operationSystemName: 'dummy-invalid-system-name',
+        operationBody: {'dummy-key': 'dummy-value'},
+        onSuccess: (success) {},
+        onError: (error) => completer.completeError(error),
+      );
+
+      expect(() => completer.future, throwsA(isA<MindboxProtocolError>()));
+    },
+  );
+
+  test(
+    'When server returns internal error, executeSyncOperation() should throw'
+    'MindboxServerError to onError callback',
+    () async {
+      final completer = Completer<Exception>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      handler.executeSyncOperation(
+        operationSystemName: 'dummy-server-error',
+        operationBody: {'dummy-key': 'dummy-value'},
+        onSuccess: (success) {},
+        onError: (error) => completer.completeError(error),
+      );
+
+      expect(() => completer.future, throwsA(isA<MindboxServerError>()));
+    },
+  );
+
+  test(
+    'When network error occurred, executeSyncOperation() should '
+    'return MindboxNetworkError to onError callback',
+    () async {
+      final completer = Completer<Exception>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      handler.executeSyncOperation(
+        operationSystemName: 'dummy-network-error',
+        operationBody: {'dummy-key': 'dummy-value'},
+        onSuccess: (success) {},
+        onError: (error) => completer.completeError(error),
+      );
+
+      expect(() => completer.future, throwsA(isA<MindboxNetworkError>()));
+    },
+  );
+
+  test(
+    'When Mindbox SDK internal error occurred, executeSyncOperation() should '
+    'return MindboxInternalError to onError callback',
+    () async {
+      final completer = Completer<Exception>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      handler.executeSyncOperation(
+        operationSystemName: 'dummy-internal-error',
+        operationBody: {'dummy-key': 'dummy-value'},
+        onSuccess: (success) {},
+        onError: (error) => completer.completeError(error),
+      );
+
+      expect(() => completer.future, throwsA(isA<MindboxInternalError>()));
+    },
+  );
+
+  test(
+    'When response data from native Mindbox SDK is empty or null , '
+    'executeSyncOperation() should return MindboxInternalError '
+    'to onError callback',
+    () async {
+      final completer = Completer<Exception>();
+
+      final validConfig = Configuration(
+        domain: 'domain',
+        endpointIos: 'endpointIos',
+        endpointAndroid: 'endpointAndroid',
+        subscribeCustomerIfCreated: true,
+      );
+
+      await handler.init(configuration: validConfig);
+
+      handler.executeSyncOperation(
+        operationSystemName: 'dummy-null-error-message',
+        operationBody: {'dummy-key': 'dummy-value'},
+        onSuccess: (success) {},
+        onError: (error) => completer.completeError(error),
+      );
+
+      expect(() => completer.future, throwsA(isA<MindboxInternalError>()));
+    },
+  );
+}
+
+class StubMindboxMethodHandler {
+  void handlePushClick({required Function(String url) callback}) {
+    callback('dummy-url');
+  }
+}
