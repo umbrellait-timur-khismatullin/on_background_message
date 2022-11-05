@@ -163,6 +163,34 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.8.0"
+  mindbox:
+    dependency: "direct main"
+    description:
+      path: "mindbox/mindbox"
+      relative: true
+    source: path
+    version: "2.1.5"
+  mindbox_android:
+    dependency: transitive
+    description:
+      path: "mindbox/mindbox_android"
+      relative: true
+    source: path
+    version: "2.1.5"
+  mindbox_ios:
+    dependency: transitive
+    description:
+      path: "mindbox/mindbox_ios"
+      relative: true
+    source: path
+    version: "2.1.5"
+  mindbox_platform_interface:
+    dependency: transitive
+    description:
+      path: "mindbox/mindbox_platform_interface"
+      relative: true
+    source: path
+    version: "2.1.5"
   path:
     dependency: transitive
     description:
