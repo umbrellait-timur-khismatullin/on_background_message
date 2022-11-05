@@ -26,17 +26,20 @@ class MindboxAndroidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var tokenSubscription: String? = null
 
     companion object {
-        lateinit var channel: MethodChannel
+        var channel: MethodChannel? = null
         fun pushClicked(link: String, payload: String) {
             Handler(Looper.getMainLooper()).post {
-                channel.invokeMethod("pushClicked", listOf(link, payload))
+                channel?.invokeMethod("pushClicked", listOf(link, payload))
             }
         }
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "mindbox.cloud/flutter-sdk")
-        channel.setMethodCallHandler(this)
+        Log.i("MindboxAndroidPlugin", "onAttachedToEngine")
+        if (channel == null) {
+            channel = MethodChannel(flutterPluginBinding.binaryMessenger, "mindbox.cloud/flutter-sdk")
+        }
+        channel?.setMethodCallHandler(this)
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -114,10 +117,11 @@ class MindboxAndroidPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
-        channel.setMethodCallHandler(null)
+        channel?.setMethodCallHandler(null)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        Log.i("MindboxAndroidPlugin", "onAttachedToActivity")
         context = binding.activity
     }
 

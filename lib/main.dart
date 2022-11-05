@@ -31,6 +31,13 @@ void main() async {
     print('$link, $payload'); // I/flutter ( 1680): link, payload
   });
 
+  Future.delayed(const Duration(seconds: 10)).then(
+    (value) => Mindbox.instance.executeAsyncOperation(
+      operationSystemName: 'operationSystemName',
+      operationBody: {'': ''},
+    ),
+  );
+
   runApp(const MyApp());
 }
 
